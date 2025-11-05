@@ -313,7 +313,10 @@ def get_benchmark_models(test_models: List[str] = []) -> List[str]:
         model_names.sort()
     else:
         # Filter requested models against available ones
-        model_names = [model for model in test_models if model in available_models]
+        # model_names = [model for model in test_models if model in available_models]
+        model_names = [m for m in available_models if any(d in m for d in test_models)]
+        # sort subset alphabetically
+        model_names.sort()
         if len(model_names) < len(test_models):
             missing_models = set(test_models) - set(available_models)
             print(f"Warning: Some requested models are not available: {missing_models}")
