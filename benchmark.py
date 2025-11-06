@@ -15,6 +15,12 @@ Example:
     python benchmark.py --verbose --models llama2:13b codellama:34b
 """
 
+import openlit
+
+# init openlit so we can track this usage, needs OTEL_EXPORTER_OTLP_ENDPOINT env variable!
+# must be done before the other libs are loaded, especially ollama
+openlit.init()
+
 import argparse
 from typing import List, Dict, Optional
 from datetime import datetime
@@ -23,7 +29,6 @@ import ollama
 from pydantic import BaseModel, Field
 
 from tabulate import tabulate
-
 
 class Message(BaseModel):
     """Represents a single message in the chat interaction."""
@@ -391,9 +396,13 @@ def main() -> None:
     # Execute benchmarks for each model and prompt
     for model_name in model_names:
         responses: List[OllamaResponse] = []
+        if not args.verbose:
+            print(f"Benchmarking: {model_name} ", end="")
         for prompt in args.prompts:
             if args.verbose:
                 print(f"\n\nBenchmarking: {model_name}\nPrompt: {prompt}")
+            else:
+                print(f".", end="")
 
             if response := run_benchmark(model_name, prompt, verbose=args.verbose):
                 responses.append(response)
@@ -402,6 +411,8 @@ def main() -> None:
                     inference_stats(response)
 
         benchmarks[model_name] = responses
+        if not args.verbose:
+            print(f" done.")
 
     if args.table_output:
         table_stats(benchmarks)
